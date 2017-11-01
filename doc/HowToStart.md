@@ -70,8 +70,11 @@ TODO
 
 
 
-# Connect to public testnet
+# Start node with public testnet
 TODO
 
-# Connect to mainnet
+# Start node with mainnet
+TODO
+
+# Start mining
 TODO

@@ -2,8 +2,8 @@
 - Ubuntu 16.04 (Virtual machine or PC, 4Gb RAM, NN Gb disk space)
 
 TODO:
-1. shell script to install dependencies and build the project
-2. vagrant image for developers
+1. shell script to install dependencies and build the project in "one click"
+2. vagrant image for developers to deploy local dev environment in "one click"
 
 # Install dependencies
 

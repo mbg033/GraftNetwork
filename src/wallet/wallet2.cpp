@@ -4844,6 +4844,7 @@ void wallet2::get_hard_fork_info(uint8_t version, uint64_t &earliest_height)
 //----------------------------------------------------------------------------------------------------
 bool wallet2::use_fork_rules(uint8_t version, int64_t early_blocks)
 {
+#ifdef USE_MONERO_HARDFORK
   uint64_t height, earliest_height;
   boost::optional<std::string> result = m_node_rpc_proxy.get_height(height);
   throw_on_rpc_response_error(result, "get_info");
@@ -4856,6 +4857,9 @@ bool wallet2::use_fork_rules(uint8_t version, int64_t early_blocks)
   else
     LOG_PRINT_L2("Not using v" << (unsigned)version << " rules");
   return close_enough;
+#else
+  return true;
+#endif
 }
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_upper_transaction_size_limit()

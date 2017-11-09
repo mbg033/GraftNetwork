@@ -87,6 +87,7 @@ static const struct {
   uint8_t threshold;
   time_t time;
 } mainnet_hard_forks[] = {
+#ifdef USE_MONERO_HARDFORKS
   // version 1 from the start of the blockchain
   { 1, 1, 0, 1341378000 },
 
@@ -100,12 +101,13 @@ static const struct {
   { 4, 1220516, 0, 1483574400 },
   
   // version 5 starts from block 1288616, which is on or around the 15th of April, 2017. Fork time finalised on 2017-03-14.
-  { 5, 1288616, 0, 1489520158 },  
+  { 5, 1288616, 0, 1489520158 },
 
   // version 6 starts from block 1400000, which is on or around the 16th of September, 2017. Fork time finalised on 2017-08-18.
   { 6, 1400000, 0, 1503046577 },
+#endif
 };
-static const uint64_t mainnet_hard_fork_version_1_till = 1009826;
+static const uint64_t mainnet_hard_fork_version_1_till = 1;
 
 static const struct {
   uint8_t version;
@@ -113,6 +115,7 @@ static const struct {
   uint8_t threshold;
   time_t time;
 } testnet_hard_forks[] = {
+#ifdef USE_MONERO_HARDFORKS
   // version 1 from the start of the blockchain
   { 1, 1, 0, 1341378000 },
 
@@ -125,8 +128,9 @@ static const struct {
   { 5, 802660, 0, 1472415036 + 86400*180 }, // add 5 months on testnet to shut the update warning up since there's a large gap to v6
 
   { 6, 971400, 0, 1501709789 },
+#endif
 };
-static const uint64_t testnet_hard_fork_version_1_till = 624633;
+static const uint64_t testnet_hard_fork_version_1_till = 1;
 
 //------------------------------------------------------------------
 Blockchain::Blockchain(tx_memory_pool& tx_pool) :
@@ -751,7 +755,11 @@ difficulty_type Blockchain::get_difficulty_for_next_block()
     m_timestamps = timestamps;
     m_difficulties = difficulties;
   }
+#ifdef USE_MONERO_HARDFORKS
   size_t target = get_current_hard_fork_version() < 2 ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V2;
+#else
+ size_t target =  DIFFICULTY_TARGET_V2;
+#endif
   return next_difficulty(timestamps, difficulties, target);
 }
 //------------------------------------------------------------------
@@ -952,7 +960,11 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   }
 
   // FIXME: This will fail if fork activation heights are subject to voting
+#ifdef USE_MONERO_HARDFORKS
   size_t target = get_ideal_hard_fork_version(bei.height) < 2 ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V2;
+#else
+  size_t target =  DIFFICULTY_TARGET_V2;
+#endif
 
   // calculate the difficulty target for the block and return it
   return next_difficulty(timestamps, cumulative_difficulties, target);
@@ -999,6 +1011,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
     money_in_use += o.amount;
   partial_block_reward = false;
 
+#ifdef USE_MONERO_HARDFORKS
   if (version == 3) {
     for (auto &o: b.miner_tx.vout) {
       if (!is_valid_decomposed_amount(o.amount)) {
@@ -1007,6 +1020,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
       }
     }
   }
+#endif // USE_MONERO_HARDFORKS
 
   std::vector<size_t> last_blocks_sizes;
   get_last_n_blocks_sizes(last_blocks_sizes, CRYPTONOTE_REWARD_BLOCKS_WINDOW);
@@ -1020,8 +1034,12 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
     MERROR_VER("coinbase transaction spend too much money (" << print_money(money_in_use) << "). Block reward is " << print_money(base_reward + fee) << "(" << print_money(base_reward) << "+" << print_money(fee) << ")");
     return false;
   }
+#ifdef USE_MONERO_HARDFORKS
   // From hard fork 2, we allow a miner to claim less block reward than is allowed, in case a miner wants less dust
   if (m_hardfork->get_current_version() < 2)
+#else
+  if (false)
+#endif
   {
     if(base_reward + fee != money_in_use)
     {
@@ -1169,7 +1187,13 @@ bool Blockchain::create_block_template(block& b, const account_public_address& m
    */
   //make blocks coin-base tx looks close to real coinbase tx to get truthful blob size
   uint8_t hf_version = m_hardfork->get_current_version();
+
+#ifdef USE_MONERO_HARDFORKS
   size_t max_outs = hf_version >= 4 ? 1 : 11;
+#else
+  size_t max_outs = 1;
+#endif
+
   bool r = construct_miner_tx(height, median_size, already_generated_coins, txs_size, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
   CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, first chance");
   size_t cumulative_size = txs_size + get_object_blobsize(b.miner_tx);
@@ -2303,9 +2327,12 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
-
+#ifdef USE_MONERO_HF
   // from hard fork 2, we forbid dust and compound outputs
   if (m_hardfork->get_current_version() >= 2) {
+#else
+  if (true) {
+#endif
     for (auto &o: tx.vout) {
       if (tx.version == 1)
       {
@@ -2317,8 +2344,13 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
     }
   }
 
+#ifdef USE_MONERO_HARDFORKS
   // in a v2 tx, all outputs must have 0 amount
   if (m_hardfork->get_current_version() >= 3) {
+#else
+  if (true) {
+#endif
+
     if (tx.version >= 2) {
       for (auto &o: tx.vout) {
         if (o.amount != 0) {
@@ -2329,8 +2361,13 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
     }
   }
 
+
+#ifdef USE_MONERO_HARDFORKS
   // from v4, forbid invalid pubkeys
   if (m_hardfork->get_current_version() >= 4) {
+#else
+  if (true) {
+#endif
     for (const auto &o: tx.vout) {
       if (o.target.type() == typeid(txout_to_key)) {
         const txout_to_key& out_to_key = boost::get<txout_to_key>(o.target);
@@ -2444,11 +2481,20 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
 
   // from hard fork 2, we require mixin at least 2 unless one output cannot mix with 2 others
   // if one output cannot mix with 2 others, we accept at most 1 output that can mix
+
+#ifdef USE_MONERO_HARDFORKS
   if (hf_version >= 2)
+#else
+  if (true)
+#endif
   {
     size_t n_unmixable = 0, n_mixable = 0;
     size_t mixin = std::numeric_limits<size_t>::max();
+#ifdef USE_MONERO_HARDFORKS
     const size_t min_mixin = hf_version >= HF_VERSION_MIN_MIXIN_4 ? 4 : 2;
+#else
+    const size_t min_mixin = 4;
+#endif
     for (const auto& txin : tx.vin)
     {
       // non txin_to_key inputs will be rejected below
@@ -2827,7 +2873,11 @@ static uint64_t get_fee_quantization_mask()
 uint64_t Blockchain::get_dynamic_per_kb_fee(uint64_t block_reward, size_t median_block_size, uint8_t version)
 {
   const uint64_t min_block_size = get_min_block_size(version);
+#ifdef  USE_MONERO_HARDFORKS
   const uint64_t fee_per_kb_base = version >= 5 ? DYNAMIC_FEE_PER_KB_BASE_FEE_V5 : DYNAMIC_FEE_PER_KB_BASE_FEE;
+#else
+  const uint64_t fee_per_kb_base = DYNAMIC_FEE_PER_KB_BASE_FEE_V5;
+#endif
 
   if (median_block_size < min_block_size)
     median_block_size = min_block_size;

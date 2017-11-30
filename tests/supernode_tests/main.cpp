@@ -33,6 +33,7 @@
 #include "wallet/wallet2_api.h"
 #include "wallet/wallet2.h"
 #include "supernode/supernode_handler.h"
+#include "supernode/fsn_servant.h"
 #include "include_base_utils.h"
 #include "cryptonote_config.h"
 
@@ -52,11 +53,13 @@
 #include <string>
 
 using namespace graft;
+using namespace supernode;
 using namespace std;
 
 namespace consts {
 
 }
+
 
 struct SupernodeHandlerTest : public testing::Test
 {
@@ -76,6 +79,8 @@ struct SupernodeHandlerTest : public testing::Test
     }
 
 };
+
+
 
 
 TEST_F(SupernodeHandlerTest, CreateDestroyInstance)
@@ -139,6 +144,70 @@ TEST_F(SupernodeHandlerTest, ProofOfStakeTestNotMiner)
 }
 
 
+
+struct FSNServantTest : public testing::Test
+{
+
+    fsn_servant * fsns = nullptr;
+    string db_path = epee::string_tools::get_current_module_folder() + "/../../../../tests/data/supernode/test_blockchain";
+
+
+    FSNServantTest()
+    {
+        fsns = new fsn_servant(db_path, true);
+
+    }
+
+    ~FSNServantTest()
+    {
+        delete fsns;
+    }
+};
+
+
+TEST_F(FSNServantTest, CreateDestroyInstance)
+{
+    ASSERT_TRUE(fsns);
+}
+
+TEST_F(FSNServantTest, ProofOfStakeTestMiner)
+{
+    const string address1 = "T6SQG5uxxtZC17hQdnapt3WjHKZnKoJS5gzz9QMvyBthEa4ChsHujswji7vdzgUos371nBjVbweVyTrqi8mxwZHh2k1KZ14WJ";
+    const string viewkey1 = "582305765f0b173567926068c66b6073632b705100772ac066472d75479f2b07";
+    const string address2 = "T6TyzMRMpksMftG4twjXyaC1vdoJ4axHg3xxtbWiQ5Ps3soR779vdNF2R7iEhyZ1Uicacfc8X3drQFmtzLZtnPN81TwSDmyun";
+    const string viewkey2 = "455224dc3f6363fa09590efa43f5b6bdc04194d2a9c6c91e7605f7083771d20a";
+
+    fsns->add_fsn(boost::make_shared<fsn_data>(fsn_wallet_data{"", ""}, fsn_wallet_data{address1, viewkey1}));
+    fsns->add_fsn(boost::make_shared<fsn_data>(fsn_wallet_data{"", ""}, fsn_wallet_data{address2, viewkey2}));
+
+    vector<pair<uint64_t, boost::shared_ptr<fsn_data>>> output =
+            fsns->last_blocks_resolved_by_fsn(1, 1);
+    std::cout << "size: " << output.size() << std::endl;
+    ASSERT_TRUE(output.size() == 1);
+    ASSERT_TRUE(output[0].first == 1);
+    ASSERT_TRUE(output[0].second->miner.addr == address1);
+
+
+    output.clear();
+
+    output = fsns->last_blocks_resolved_by_fsn(1, 10);
+    std::cout << "size: " << output.size() << std::endl;
+    ASSERT_TRUE(output.size() == 10);
+    ASSERT_TRUE(output[0].first == 1);
+    ASSERT_TRUE(output[0].second->miner.addr == address1);
+    ASSERT_TRUE(output[9].second->miner.addr == address2);
+
+    output = fsns->last_blocks_resolved_by_fsn(20000, 10);
+    ASSERT_TRUE(output.empty());
+
+    output = fsns->last_blocks_resolved_by_fsn(20, 10000);
+    ASSERT_FALSE(output.empty());
+    for (const auto &iter : output) {
+        ASSERT_TRUE(iter.second->miner.addr == address1 || iter.second->miner.addr == address2);
+    }
+
+
+}
 
 int main(int argc, char** argv)
 {

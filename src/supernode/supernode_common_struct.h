@@ -6,19 +6,36 @@
 #include <string>
 #include <vector>
 #include <inttypes.h>
+
 using namespace std;
 
 namespace supernode {
 
 	// ------------------------------------------
 	struct fsn_wallet_data {
-		string addr;
+
+        fsn_wallet_data(const std::string &_addr, const std::string &_viewkey)
+            : addr{_addr}
+            , view_key{_viewkey} {}
+
+        fsn_wallet_data(const fsn_wallet_data &other) = default;
+
+        string addr;
 		string view_key;
 	};
 
 
 	// ------------------------------------------
 	struct fsn_data {
+
+        fsn_data(const fsn_wallet_data &_wallet, const fsn_wallet_data &_miner,
+                 const std::string &_ip = "", const std::string &_port = "")
+            : wallet{_wallet}
+            , miner{_miner}
+            , ip{_ip}
+            , port{_port} {}
+
+        fsn_data(const fsn_data &other) = default;
 		fsn_wallet_data wallet;
 		fsn_wallet_data miner;
 		string ip;

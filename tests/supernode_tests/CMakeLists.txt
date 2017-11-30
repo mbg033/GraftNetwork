@@ -32,7 +32,7 @@
 
 set(supernode_tests_sources
   main.cpp
-  ../../src/supernode/supernode_handler.cpp
+
 )
 
 set(supernode_tests_headers
@@ -46,6 +46,7 @@ target_link_libraries(supernode_tests
   PRIVATE
     wallet
     epee
+    supernode
     ${Boost_CHRONO_LIBRARY}
     ${Boost_SERIALIZATION_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}

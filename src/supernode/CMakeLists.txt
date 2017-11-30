@@ -34,23 +34,48 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(supernode_sources
     storages/local_data_storage.cpp
+    auth_sample.cpp
+    auth_sample_object.cpp
+    base_rta_object.cpp
+    base_rta_processor.cpp
+    fsn_servant.cpp
     graft_wallet.cpp
-    wallet_args.cpp
+    main.cpp
     node_rpc_proxy.cpp
-    supernode_handler.cpp)
+    pos_proxy.cpp
+    pos_sale_object.cpp
+    sub_net_broadcast.cpp
+    supernode_handler.cpp
+    supernode_rpc_server.cpp
+    wallet_args.cpp
+    wallet_pay_object.cpp
+    wallet_proxy.cpp)
 set(supernode_api_headers)
 
 set(supernode_private_headers
     storages/data_storage.h
     storages/local_data_storage.h
+    auth_sample.h
+    auth_sample_object.h
+    base_rta_object.h
+    base_rta_processor.h
+    dapi_rpc_server.h
+    fsn_servant.h
     graft_defines.h
     graft_wallet.h
+    node_rpc_proxy.h
+    pos_proxy.h
+    pos_sale_object.h
+    sub_net_broadcast.h
+    supernode_common_struct.h
+    supernode_handler.h
+    supernode_rpc_command.h
+    supernode_rpc_server_commands_defs.h
+    supernode_rpc_server.h
     wallet_args.h
     wallet_errors.h
-    node_rpc_proxy.h
-    supernode_rpc_server.h
-    supernode_rpc_server_commands_defs.h
-    supernode_handler.h)
+    wallet_pay_object.h
+    wallet_proxy.h)
 
 monero_private_headers(supernode
   ${supernode_private_headers})

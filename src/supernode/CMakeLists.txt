@@ -36,7 +36,8 @@ set(supernode_sources
     storages/local_data_storage.cpp
     graft_wallet.cpp
     wallet_args.cpp
-    node_rpc_proxy.cpp)
+    node_rpc_proxy.cpp
+    supernode_handler.cpp)
 set(supernode_api_headers)
 
 set(supernode_private_headers
@@ -48,7 +49,8 @@ set(supernode_private_headers
     wallet_errors.h
     node_rpc_proxy.h
     supernode_rpc_server.h
-    supernode_rpc_server_commands_defs.h)
+    supernode_rpc_server_commands_defs.h
+    supernode_handler.h)
 
 monero_private_headers(supernode
   ${supernode_private_headers})
@@ -69,6 +71,7 @@ target_link_libraries(supernode
     ${Boost_THREAD_LIBRARY}
     ${Boost_REGEX_LIBRARY}
   PRIVATE
+    wallet
     ${EXTRA_LIBRARIES})
 add_dependencies(supernode version)
 

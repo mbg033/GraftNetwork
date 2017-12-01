@@ -68,7 +68,7 @@ struct SupernodeHandlerTest : public testing::Test
 
     SupernodeHandlerTest()
     {
-        string db_path = epee::string_tools::get_current_module_folder() + "/../../../../tests/data/supernode/test_blockchain";
+        string db_path = epee::string_tools::get_current_module_folder() + "/../data/supernode/test_blockchain";
         std::cout << db_path << std::endl;
         sh = new SupernodeHandler("", db_path, true);
     }
@@ -149,7 +149,7 @@ struct FSNServantTest : public testing::Test
 {
 
     fsn_servant * fsns = nullptr;
-    string db_path = epee::string_tools::get_current_module_folder() + "/../../../../tests/data/supernode/test_blockchain";
+    string db_path = epee::string_tools::get_current_module_folder() + "/../data/supernode/test_blockchain";
 
 
     FSNServantTest()
